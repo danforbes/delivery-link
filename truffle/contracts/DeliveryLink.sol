@@ -3,41 +3,58 @@ pragma solidity 0.4.24;
 import "chainlink/contracts/ChainlinkClient.sol";
 import "chainlink/contracts/vendor/Ownable.sol";
 
-contract GanacheChainlinkClient is ChainlinkClient, Ownable {
+contract DeliveryLink is ChainlinkClient, Ownable {
   uint256 constant private ORACLE_PAYMENT = 1 * LINK;
 
-  uint256 public currentPrice;
+  string private timestampJobId;
+  uint256 public timestamp;
 
   event RequestEthereumPriceFulfilled(
     bytes32 indexed requestId,
-    uint256 indexed price
+    uint256 indexed timestamp
   );
 
-  constructor(address _link) public Ownable() {
+  constructor(address _link, address _oracle) public Ownable() {
     setChainlinkToken(_link);
+    setChainlinkOracle(_oracle);
   }
 
-  function requestEthereumPrice(address _oracle, string _jobId)
+  function requestTimestamp()
     public
     onlyOwner
   {
-    Chainlink.Request memory req = buildChainlinkRequest(stringToBytes32(_jobId), this, this.fulfillEthereumPrice.selector);
-    req.add("get", "https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=USD");
-    req.add("path", "USD");
-    req.addInt("times", 100);
-    sendChainlinkRequestTo(_oracle, req, ORACLE_PAYMENT);
+    Chainlink.Request memory req = buildChainlinkRequest(stringToBytes32(timestampJobId), this, this.handleTimestampResponse.selector);
+    req.add("get", "https://showcase.linx.twenty57.net:8080/UnixTime/tounixtimestamp?datetime=now");
+    req.add("path", "UnixTimeStamp");
+    sendChainlinkRequest(req, ORACLE_PAYMENT);
   }
 
-  function fulfillEthereumPrice(bytes32 _requestId, uint256 _price)
+  function handleTimestampResponse(bytes32 _requestId, uint256 _timestamp)
     public
     recordChainlinkFulfillment(_requestId)
   {
-    emit RequestEthereumPriceFulfilled(_requestId, _price);
-    currentPrice = _price;
+    emit RequestEthereumPriceFulfilled(_requestId, _timestamp);
+    timestamp = _timestamp;
+  }
+
+  function setTimestampJobId(string _timestampJobId) public onlyOwner {
+    timestampJobId = _timestampJobId;
+  }
+
+  function getChainlinkOracle() public view returns (address) {
+    return chainlinkOracleAddress();
+  }
+
+  function updateChainlinkOracle(address _oracle) public onlyOwner {
+    setChainlinkOracle(_oracle);
   }
 
   function getChainlinkToken() public view returns (address) {
     return chainlinkTokenAddress();
+  }
+
+  function updateChainlinkToken(address _link) public onlyOwner {
+    setChainlinkToken(_link);
   }
 
   function withdrawLink() public onlyOwner {

@@ -1,3 +1,4 @@
+.vscode/
 build/
 chainlink/root/
 node_modules/
