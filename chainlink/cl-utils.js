@@ -1,11 +1,33 @@
 const http = require('http');
 
 module.exports = {
+  createBridge: createBridge,
+  createJob: createJob,
+  createTask: createTask,
   getAcctAddr: getAcctAddr,
-  getRunLogJobForOracle: getRunLogJobForOracle,
-  getTaskForType: getTaskForType,
+  postBridge: postBridge,
   postJob: postJob,
 };
+
+function createBridge(name, url) {
+  return {name: name, url: url};
+}
+
+function createJob(initiatorType) {
+  return {
+    initiators: [
+      {
+        type: initiatorType,
+        params: {}
+      }
+    ],
+    tasks: []
+  }
+}
+
+function createTask(type) {
+  return {type: type, params: {}};
+}
 
 async function getAcctAddr() {
   const sessionCookie = await getSessionCookie();
@@ -41,14 +63,39 @@ async function getAcctAddr() {
   });
 }
 
-function getRunLogJobForOracle(oracleContractAddress) {
-  const job = JSON.parse(JSON.stringify(jobs.runLogJob));
-  job.initiators[0].params.address = oracleContractAddress;
-  return job;
-}
+async function postBridge(bridge) {
+  const sessionCookie = await getSessionCookie();
+  const opts = {
+    host: 'localhost',
+    port: '6688',
+    path: '/v2/bridge_types',
+    method: 'POST',
+    headers: {
+      'Cookie': sessionCookie
+    }
+  };
 
-function getTaskForType(type) {
-  return JSON.parse(JSON.stringify(tasks[type]));
+  return new Promise((resolve, reject) => {
+    const req = http.request(opts, (res) => {
+      res.setEncoding('utf-8')
+      
+      let resBody = '';
+      res.on('data', (chunk) => {
+        resBody += chunk;
+      });
+
+      res.on('end', () => {
+        resolve(JSON.parse(resBody));
+      });
+
+      res.on('error', (err) => {
+        reject(err);
+      });
+    });
+
+    req.write(JSON.stringify(bridge));
+    req.end();
+  });
 }
 
 async function postJob(job) {
@@ -119,23 +166,4 @@ function getSessionCookie() {
     req.write(reqBody);
     req.end();
   });
-}
-
-const jobs = {
-  runLogJob: {
-    initiators: [
-      {
-        type: "runlog",
-        params: {}
-      }
-    ],
-    tasks: []
-  }
-};
-
-const tasks = {
-  ethTx: { type: "ethtx" },
-  ethUint256: { type: "ethuint256" },
-  httpGet: { type: "httpget" },
-  jsonParse: { type: "jsonparse" },
 }
