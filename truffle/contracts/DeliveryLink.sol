@@ -6,12 +6,23 @@ import "chainlink/contracts/vendor/Ownable.sol";
 contract DeliveryLink is ChainlinkClient, Ownable {
   uint256 constant private ORACLE_PAYMENT = 1 * LINK;
 
+  string private packageCarrier;
+  string private packageCode;
+
   string private timestampJobId;
   uint256 public timestamp;
 
-  event RequestEthereumPriceFulfilled(
+  event TimestampResponseReceived(
     bytes32 indexed requestId,
     uint256 indexed timestamp
+  );
+
+  string private deliveryStatusJobId;
+  string public deliveryStatus;
+
+  event DeliveryStatusResponseReceived(
+    bytes32 indexed requestId,
+    string indexed deliveryStatus
   );
 
   constructor(address _link, address _oracle) public Ownable() {
@@ -19,7 +30,7 @@ contract DeliveryLink is ChainlinkClient, Ownable {
     setChainlinkOracle(_oracle);
   }
 
-  function requestTimestamp()
+  function requestCurrentTimestamp()
     public
     onlyOwner
   {
@@ -33,12 +44,59 @@ contract DeliveryLink is ChainlinkClient, Ownable {
     public
     recordChainlinkFulfillment(_requestId)
   {
-    emit RequestEthereumPriceFulfilled(_requestId, _timestamp);
+    emit TimestampResponseReceived(_requestId, _timestamp);
     timestamp = _timestamp;
+  }
+
+  function requestDeliveryStatus()
+    public
+    onlyOwner
+  {
+    Chainlink.Request memory req = buildChainlinkRequest(stringToBytes32(deliveryStatusJobId), this, this.handleDeliveryStatusResponse.selector);
+    req.add("car", packageCarrier);
+    req.add("code", packageCode);
+    req.add("copyPath", "status");
+    sendChainlinkRequest(req, ORACLE_PAYMENT);
+  }
+
+  function handleDeliveryStatusResponse(bytes32 _requestId, bytes32 _deliveryStatus)
+    public
+    recordChainlinkFulfillment(_requestId)
+  {
+    deliveryStatus = bytes32ToString(_deliveryStatus);
+    emit DeliveryStatusResponseReceived(_requestId, deliveryStatus);
+  }
+
+  function setPackageCarrier(string _packageCarrier) public onlyOwner {
+    packageCarrier = _packageCarrier;
+  }
+
+  function getPackageCarrier() public view returns (string) {
+    return packageCarrier;
+  }
+
+  function setPackageCode(string _packageCode) public onlyOwner {
+    packageCode = _packageCode;
+  }
+
+  function getPackageCode() public view returns (string) {
+    return packageCode;
   }
 
   function setTimestampJobId(string _timestampJobId) public onlyOwner {
     timestampJobId = _timestampJobId;
+  }
+
+  function getTimestampJobId() public view returns (string) {
+    return timestampJobId;
+  }
+
+  function setDeliveryStatusJobId(string _deliveryStatusJobId) public onlyOwner {
+    deliveryStatusJobId = _deliveryStatusJobId;
+  }
+
+  function getDeliveryStatusJobId() public view returns (string) {
+    return deliveryStatusJobId;
   }
 
   function getChainlinkOracle() public view returns (address) {
@@ -83,6 +141,15 @@ contract DeliveryLink is ChainlinkClient, Ownable {
     assembly { // solhint-disable-line no-inline-assembly
       result := mload(add(source, 32))
     }
+  }
+
+  function bytes32ToString(bytes32 source) private pure returns (string result) {
+    bytes memory tempBytes = new bytes(32);
+    for (uint256 byteNdx; byteNdx < 32; ++byteNdx) {
+      tempBytes[byteNdx] = source[byteNdx];
+    }
+
+    return string(tempBytes);
   }
 
 }
