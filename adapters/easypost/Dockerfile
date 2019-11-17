@@ -3,8 +3,8 @@ FROM node:alpine
 WORKDIR /easypost-adapter
 ADD . .
 
-ENV PORT=8080
-EXPOSE 8080
+ENV PORT=6221
+EXPOSE 6221
 
 RUN npm install
 ENTRYPOINT ["node", "server.js"]

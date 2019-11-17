@@ -1,0 +1,18 @@
+version: '3'
+
+services:
+  chainlink:
+    image: "smartcontract/chainlink"
+    ports:
+      - "6688:6688"
+    volumes:
+      - ./chainlink:/chainlink
+    env_file:
+      - ./chainlink/chainlink-dev.env
+      - ./truffle/build/addrs.env
+    environment:
+      - ETH_URL=ws://${HOST_IP}:7545
+    command: local n -p /chainlink/chainlink.pwd -a /chainlink/api.pwd
+
+  easypost:
+    build: ./adapters/easypost
