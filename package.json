@@ -3,8 +3,7 @@
   "version": "1.0.0",
   "description": "This is a workshop project that uses Chainlink to implement payment-on-delivery.",
   "scripts": {
-    "chainlink:logs": "docker logs chainlink-dev",
-    "easypost:start": "node ./adapters/easypost/server.js&",
+    "chainlink:logs": "docker logs $(docker ps --filter \"NAME=chainlink\" --format \"{{.ID}}\")",
     "remix": "npx remixd -s . --remix-ide https://remix.ethereum.org",
     "remix:chainlink": "npx remixd -s ./node_modules/chainlink/contracts --remix-ide https://remix.ethereum.org",
     "start": "npm stop ; npm run truffle:migrate-ganache && HOST_IP=$(ip -4 addr show docker0 | grep -Po 'inet \\K[\\d.]+') docker-compose up -d && npm run truffle:init-setup",
