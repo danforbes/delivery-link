@@ -133,7 +133,12 @@ async function postJob(job) {
   });
 }
 
+let cookie;
 function getSessionCookie() {
+  if (cookie) {
+    return Promise.resolve(cookie);
+  }
+  
   const opts = {
     host: 'localhost',
     port: '6688',
@@ -150,7 +155,8 @@ function getSessionCookie() {
       
       res.on('data', () => { /* DO NOTHING */ });
       res.on('end', () => {
-        resolve(res.headers["set-cookie"][0]);
+        cookie = res.headers["set-cookie"][0];
+        resolve(cookie);
       });
 
       res.on('error', (err) => {
