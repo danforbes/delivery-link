@@ -16,3 +16,8 @@ services:
 
   easypost:
     build: ./adapters/easypost
+
+  cryptocompare:
+    build: ../bridges
+    ports:
+      - "8080"

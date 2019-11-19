@@ -25,6 +25,14 @@ contract DeliveryLink is ChainlinkClient, Ownable {
     string indexed deliveryStatus
   );
 
+  string private ethereumPriceJobId;
+  uint256 public ethereumPriceEUR;
+
+  event EthereumPriceEURResponseReceived(
+    bytes32 indexed requestId,
+    uint256 indexed ethereumPriceEUR
+  );
+
   constructor(address _link, address _oracle) public Ownable() {
     setChainlinkToken(_link);
     setChainlinkOracle(_oracle);
@@ -67,6 +75,24 @@ contract DeliveryLink is ChainlinkClient, Ownable {
     emit DeliveryStatusResponseReceived(_requestId, deliveryStatus);
   }
 
+  function requestEthereumPriceEUR()
+    public
+    onlyOwner
+  {
+    Chainlink.Request memory req = buildChainlinkRequest(stringToBytes32(ethereumPriceJobId), this, this.handleEthereumPriceEURResponse.selector);
+    req.add("copyPath", "EUR");
+    req.addInt("times", 100);
+    sendChainlinkRequest(req, ORACLE_PAYMENT);
+  }
+
+  function handleEthereumPriceEURResponse(bytes32 _requestId, uint256 _price)
+    public
+    recordChainlinkFulfillment(_requestId)
+  {
+    emit EthereumPriceEURResponseReceived(_requestId, _price);
+    ethereumPriceEUR = _price;
+  }
+
   function setPackageCarrier(string _packageCarrier) public onlyOwner {
     packageCarrier = _packageCarrier;
   }
@@ -97,6 +123,14 @@ contract DeliveryLink is ChainlinkClient, Ownable {
 
   function getDeliveryStatusJobId() public view returns (string) {
     return deliveryStatusJobId;
+  }
+
+  function setEthereumPriceJobId(string _ethereumPriceJobId) public onlyOwner {
+    ethereumPriceJobId = _ethereumPriceJobId;
+  }
+
+  function getEthereumPriceEURJobId() public view returns (string) {
+    return ethereumPriceJobId;
   }
 
   function getChainlinkOracle() public view returns (address) {

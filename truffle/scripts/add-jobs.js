@@ -39,5 +39,25 @@ module.exports = async callback => {
   const deliveryStatusJobIdTx = await deliveryLink.setDeliveryStatusJobId(easyPostJobRes.data.id);
   console.log(`Delivery status job ID added to contract! Transaction ID: ${deliveryStatusJobIdTx.tx}.`);
 
+  console.log('Creating CryptoCompare bridge on Chainlink node...');
+  const cryptoCompareBridge = clUtils.createBridge('cryptocompare', 'http://cryptocompare:8080');
+  const cryptoCompareBridgeRes = await clUtils.postBridge(cryptoCompareBridge);
+  console.log(`Bridge created! Bridge ID: ${cryptoCompareBridgeRes.data.id}.`);
+
+  const cryptoCompareJob = clUtils.createJob('runlog');
+  cryptoCompareJob.initiators[0].params.address = oracle.address;
+  cryptoCompareJob.tasks.push(clUtils.createTask('cryptocompare'));
+  cryptoCompareJob.tasks.push(clUtils.createTask('copy'));
+  cryptoCompareJob.tasks.push(clUtils.createTask('multiply'));
+  cryptoCompareJob.tasks.push(clUtils.createTask('ethuint256'));
+  cryptoCompareJob.tasks.push(clUtils.createTask('ethtx'));
+  console.log('Creating CryptoCompare job on Chainlink node...');
+  const cryptoCompareJobRes = await clUtils.postJob(cryptoCompareJob);
+  console.log(`Job created! Job ID: ${cryptoCompareJobRes.data.id}.`);
+
+  console.log('Adding Ethereum price job ID to DeliveryLink contract...');
+  const ethereumPriceJobIdTx = await deliveryLink.setEthereumPriceJobId(cryptoCompareJobRes.data.id);
+  console.log(`Ethereum price job ID added to contract! Transaction ID: ${ethereumPriceJobIdTx.tx}.`);
+
   callback();
 }
