@@ -38,9 +38,9 @@ In order to exercise the external adapter capabilities, you will need to provide
 1. Update the `API_KEY` key value in [the `adapters/easypost/.env` file](/adapters/easypost/.env) to reflect the value
    of your EasyPost API key.
 1. Create a new workspace in Ganache:
-  1. On the `Workspace` tab, add `truffle/truffle-config.js` from this project.
-  1. On the server tab, select the `0.0.0.0 - All Interfaces` hostname.
-  1. Save the workspace.
+   1. On the `Workspace` tab, add `truffle/truffle-config.js` from this project.
+   1. On the server tab, select the `0.0.0.0 - All Interfaces` hostname.
+   1. Save the workspace.
 1. Run `npm start` to perform the steps described above.
 1. Run `npm run chainlink:logs` to view the Chainlink node logs and ensure it started successfully.
 1. Sign in to the Chainlink node's web UI:
