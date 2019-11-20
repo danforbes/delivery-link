@@ -35,7 +35,7 @@ module.exports = async callback => {
   const easyPostJobRes = await clUtils.postJob(easyPostJob);
   console.log(`Job created! Job ID: ${easyPostJobRes.data.id}.`);
 
-  console.log('Adding delivery status job ID to DeliverLink contract...');
+  console.log('Adding delivery status job ID to DeliveryLink contract...');
   const deliveryStatusJobIdTx = await deliveryLink.setDeliveryStatusJobId(easyPostJobRes.data.id);
   console.log(`Delivery status job ID added to contract! Transaction ID: ${deliveryStatusJobIdTx.tx}.`);
 
